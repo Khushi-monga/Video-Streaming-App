@@ -28,6 +28,17 @@ app.use(express.static("public")) //store in the public folder
 app.use(cookieParser())
 
 
+//Routes import 
+import userRouter from "./routes/user.routes.js";
+
+
+//ROUTES DECLARATION 
+//app.get() -> when the routes were defined in the same file. But not how it usually happens 
+//you call the router as a middleware with app.use()
+//app.use("/users", userRouter); //on receiving the request for /users -> activate userRouter 
+app.use("/api/v1/users", userRouter); //good practice to mention api if you are defining an api and its version, updates lead to later versions
+//So when the control is passed to the userRouter and it defines further routes, the url forms as : https://localhost:8000/api/v1/users/route_as_defined_in_userRouter
+
 
 
 export { app }
