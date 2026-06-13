@@ -94,4 +94,92 @@ const registerUser = asyncHandler( async (req, res) => {
     )
 })
 
-export {registerUser} 
+
+
+
+//LOGIN 
+
+
+const generateRefrershAndAccessTokens = async (userId) => {
+    const user = await User.findById(userId)
+    const accessToken = user.generateAccessToken()
+    const refreshToken = user.generateRefrershToken()
+
+    //update the refresh Token field in the record for this user in the db
+    user.refreshToken = refreshToken
+    await user.save()
+
+    return {refreshToken, accessToken}
+}
+
+
+const loginUser = asyncHandler( async (req, res) => {
+    //Get userdetails -> email/username , password
+    //validation of details 
+    //check whether user exists -> db query 
+    //if not -> error
+    //if yes -> verify password
+    //access and refresh token 
+    //send cookie
+    //send response
+    
+    const {username, email, password} = req.body
+
+    //validation file likhke import krne ka check krna pdega 
+    if(!username || !email){
+        throw new ApiError(400, "Username or email is required")
+    }
+
+    //check user exists 
+    const user = await User.findOne({
+        $or: [{ username }, { password }]
+    })
+
+    if(!user){
+        throw new ApiError(404, "User does not exist")
+    }
+
+    //verify password -> we had created the method in our model 
+    const isPasswordValid = await user.isPasswordCorrect(password)
+
+    if(!isPasswordValid){
+        throw new ApiError(401, "Invalid user credentials")
+    }
+
+    //Created a method here only to generate access and refresh tokens together
+    const {refreshToken, accessToken} = await generateRefrershAndAccessTokens(user._id)
+
+    //now depending on the cost of the dp query -> if it's economic => make another db call, else update the same userobject to reflect the saved changes after token generation
+    //here we make another call
+    const loggedInUser = User.findById(user._id).select("-password -refreshToken") //we can use this to send in the response too that's why teh select
+
+    //configuring options (settings) for cookies to ensure that cookies are secure and only server can modify them
+    const options = {
+        httpOnly: true,
+        secure: true
+    }
+
+    //send back the response and cookies
+    return res.status(200)
+    .cookie("accessToken", accessToken, options)
+    .cookie("refreshToken", refreshToken, options)
+    .json(
+        new ApiResponse(
+            200,
+            {
+                user: loggedInUser,
+                accessToken,
+                refreshToken
+            },
+            "User logged in successfully"
+        )
+    )
+})
+
+
+
+
+export {
+    registerUser,
+    loginUser
+} 
