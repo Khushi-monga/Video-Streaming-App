@@ -24,7 +24,7 @@
                 lowercase: true,
                 trim: true
             },
-            fullname: {
+            fullName: {
                 type: String,
                 required: true,
                 index: true,
@@ -53,12 +53,11 @@
     //Saving password securely 
     //The pre hook is kind of a middleware use to execute functions just before certain events on the object it is being used with 
     //userSchema ->object used with pre; save -> event => thus, executes the specified function before saving userSchema
-    userSchema.pre("save", async function (next) {
-        if(! userSchema.isModified("password")) return;
+    userSchema.pre("save", async function () {
+        if(! this.isModified("password")) return;
         
         //only change password if it has been modified -> either entered for the first tine or updated later
-        this.password = await bcrypt.hash(this.password, 10)
-        next()
+        this.password = await bcrypt.hash(this.password, 10);
     })
 
 

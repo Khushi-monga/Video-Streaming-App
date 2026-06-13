@@ -34,7 +34,7 @@ const registerUser = asyncHandler( async (req, res) => {
     }
 
     //3. Checking for existing user
-    const existingUser = User.findOne({
+    const existingUser = await User.findOne({
         $or: [{ username }, { email }] //returns first doc/record that matches the given email or username
     })
 
@@ -45,7 +45,13 @@ const registerUser = asyncHandler( async (req, res) => {
     //4. Check for coverimgs and avatar
     //accessing imgs' local path from multer (req mei fields add kr deta hai so we can access them) 
     const avatarLocalPath = req.files?.avatar[0]?.path; //good practice to add optionally, reduces throwing of errors in case access is not there for some reason
-    const coverImgLocalPath = req.files?.coverImg[0]?.path; //coverimg[0] -> basically accessing the th property of this object
+    //const coverImgLocalPath = req.files?.coverImg[0]?.path; //coverimg[0] -> basically accessing the th property of this object
+
+    let coverImgLocalPath;
+    if(req.files && Array.isArray(req.files.coverImg) && req.files.coverImg.length > 0){
+        coverImgLocalPath = req.files.coverImg[0].path
+    }
+
 
     //avatar is a required field so add the check for that 
     if(!avatarLocalPath) {
@@ -54,7 +60,7 @@ const registerUser = asyncHandler( async (req, res) => {
 
     //5. Now upload the files to cloudinary (we already had a utility created for that)
     const avatar = await uploadOnCloudinary(avatarLocalPath)
-    const converImg =  await uploadOnCloudinary(coverImgLocalPath)
+    const coverImg =  await uploadOnCloudinary(coverImgLocalPath)
 
     //final check for avatar being uploaded successfully 
     if(!avatar){
@@ -69,7 +75,7 @@ const registerUser = asyncHandler( async (req, res) => {
         coverImg: coverImg?.url || "",
         email,
         password,
-        username: username.toLowercase()
+        username: username.toLowerCase()
     })
 
 
